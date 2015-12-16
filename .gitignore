@@ -1,41 +1,122 @@
-# Compiled Lua sources
-luac.out
+--VENDETTA FORTUNE 1.0, by Onrage
 
-# luarocks build files
-*.src.rock
-*.zip
-*.tar.gz
+if not myHero.charName:lower():find("fortune") then return end
 
-# Object files
-*.o
-*.os
-*.ko
-*.obj
-*.elf
 
-# Precompiled Headers
-*.gch
-*.pch
+-- VPREDICTION
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
-*.def
-*.exp
+local REQUIRED_LIBS = {
+	["VPrediction"] = "https://raw.githubusercontent.com/honda7/BoL/master/Common/VPrediction.lua"
+}
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+local DOWNLOADING_LIBS, DOWNLOAD_COUNT = false, 0
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+function AfterDownload()
+	DOWNLOAD_COUNT = DOWNLOAD_COUNT - 1
+	if DOWNLOAD_COUNT == 0 then
+		DOWNLOADING_LIBS = false
+	end
+end
 
+for DOWNLOAD_LIB_NAME, DOWNLOAD_LIB_URL in pairs(REQUIRED_LIBS) do
+	if FileExist(LIB_PATH .. DOWNLOAD_LIB_NAME .. ".lua") then
+		require(DOWNLOAD_LIB_NAME)
+	else
+		DOWNLOADING_LIBS = true
+		DOWNLOAD_COUNT = DOWNLOAD_COUNT + 1
+		DownloadFile(DOWNLOAD_LIB_URL, LIB_PATH .. DOWNLOAD_LIB_NAME..".lua", AfterDownload)
+	end
+end
+
+--Spells
+
+local ts
+
+function OnLoad()
+	-- Menu
+	
+	Config = scriptConfig("Vendetta Fortune", "Onrage")
+	Config:addParam("drawCircle", "Draw Circle", SCRIPT_PARAM_ONOFF, true)
+	Config:addParam("harass3", "Harass", SCRIPT_PARAM_ONKEYDOWN, false, string.byte("S"))
+	Config:addParam("harass1", "Auto Harass Q", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("F"))
+	Config:addParam("harass2", "Auto Harass E", SCRIPT_PARAM_ONKEYTOGGLE, false, string.byte("G"))
+	Config:addParam("combo", "Combo mode", SCRIPT_PARAM_ONKEYDOWN, false, string.byte(" "))
+
+	--target selector
+	TS = TargetSelector(TARGET_LESS_CAST_PRIORITY, 1000, DAMAGE_PHYSICAL)
+	
+	
+	PrintChat("VENDETTA FORTUNE 1.0, BY ONRAGE")
+	
+	
+end
+
+
+
+--Combo 
+
+function OnTick()
+	
+	TS:update()
+	
+	if (TS.target ~= nil) then
+		
+		if (Config.combo) then
+			
+			if (myHero:CanUseSpell(_Q) == READY) then
+				CastSpell(_Q, TS.target)
+			end
+			
+			if (myHero:CanUseSpell(_W) == READY) then
+				CastSpell(_W, TS.target.x,TS.target.z)
+			end
+			
+			if (myHero:CanUseSpell(_E) == READY) then
+				CastSpell(_E, TS.target)
+			end
+		end
+		
+		if (Config.harass3) then
+		
+		if (myHero:CanUseSpell(_Q) == READY) then
+				CastSpell(_Q, TS.target)
+			end
+			
+			if (myHero:CanUseSpell(_E) == READY) then
+				CastSpell(_E, TS.target)
+			end
+		end
+		
+		if (Config.harass1) then
+		
+			if (myHero:CanUseSpell(_Q) == READY) then
+				CastSpell(_Q, TS.target)
+			end
+		end
+		
+		if (Config.harass2) then
+		
+			if (myHero:CanUseSpell(_E) == READY) then
+				CastSpell(_E, TS.target)
+			end
+		end
+	end
+end
+
+
+
+ 
+-- Drawing 
+function OnDraw()
+	if (Config.drawCircle) then
+		if (myHero:CanUseSpell(_Q) == READY) then
+			DrawCircle(myHero.x, myHero.y, myHero.z, 650, 0xFF9900)
+		end
+		if (myHero:CanUseSpell(_E) == READY) then 
+			DrawCircle(myHero.x, myHero.y, myHero.z, 1000, 0x444444)
+		end
+		if (myHero:CanUseSpell(_R) == READY) then
+			DrawCircle(myHero.x, myHero.y, myHero.z, 1400, 0x444444)
+		end
+	end
+end
